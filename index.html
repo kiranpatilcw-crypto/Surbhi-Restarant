@@ -738,12 +738,12 @@
                 const item = allItemsMap[id];
                 const itemTotal = item.price * qty;
                 totalPrice += itemTotal;
-                orderDetails += `${item.name} x ${qty} - Rs ${item.price}%0A`;
+                orderDetails += `${item.name} x ${qty} - Rs ${item.price}\n`;
             }
 
-            const message = `New Order!%0A%0ACustomer: ${name}%0AMobile: ${mobile}%0ATable No: ${table}%0A%0AOrder Details:%0A${orderDetails}%0ATotal Amount: Rs ${totalPrice}`;
+            const message = `*New Order!*\n\nCustomer: ${name}\nMobile: ${mobile}\nTable No: ${table}\n\n*Order Details:*\n${orderDetails}\n*Total Amount:* Rs ${totalPrice}`;
             
-            const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+            const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
             window.open(whatsappUrl, '_blank');
         }
 

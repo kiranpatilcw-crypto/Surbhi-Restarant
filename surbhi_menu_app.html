@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surbhi Restaurant Menu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --gold: #FFD700;
+            --gold-dark: #ccac00;
+            --bg-main: #0a0a0a;
+            --bg-card: #141414;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: #e5e5e5;
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 100px; /* Space for floating cart */
+        }
+
+        h1, h2, h3, .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Hide Scrollbar for Horizontal Nav */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
+        .gold-text { color: var(--gold); }
+        .gold-bg { background-color: var(--gold); color: #000; }
+        .gold-border { border-color: var(--gold); }
+
+        .btn-add {
+            background-color: transparent;
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            color: var(--gold);
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .btn-add:active {
+            background-color: var(--gold);
+            color: #000;
+        }
+
+        .qty-control {
+            display: flex;
+            align-items: center;
+            background: #1a1a1a;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .qty-btn {
+            color: var(--gold);
+            padding: 6px 12px;
+            font-size: 1.1rem;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .qty-btn:active { background: rgba(255, 215, 0, 0.1); }
+        .qty-val {
+            color: #fff;
+            font-weight: bold;
+            padding: 0 8px;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        /* Toast Animation */
+        #toast {
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s linear;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="text-center pt-8 pb-4 px-4">
+        <h1 class="text-4xl md:text-5xl font-bold gold-text drop-shadow-md mb-2">Surbhi Restaurant</h1>
+        <p class="text-xs text-gray-400 uppercase tracking-widest font-medium">Veg & Non-Veg | Indian | Chinese | Tandoor | Biryani</p>
+    </header>
+
+    <!-- Customer Details Form -->
+    <section class="max-w-2xl mx-auto px-4 mb-6" id="customer-form-section">
+        <div class="bg-[#141414] p-5 rounded-xl border border-yellow-500/20 shadow-lg relative">
+            <h3 class="gold-text text-sm uppercase tracking-wider font-semibold mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+                Customer Details
+            </h3>
+            
+            <div id="validation-msg" class="hidden bg-red-900/40 border border-red-500/50 text-red-200 text-xs p-2 rounded mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Please fill in all details before ordering.
+            </div>
+
+            <input type="text" id="cust-name" placeholder="Customer Name *" class="w-full mb-3 bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 text-sm transition-colors">
+            
+            <div class="flex gap-3">
+                <input type="tel" id="cust-mobile" placeholder="Mobile No *" class="w-2/3 bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 text-sm transition-colors">
+                <input type="text" id="cust-table" placeholder="Table No *" class="w-1/3 bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 text-sm transition-colors">
+            </div>
+        </div>
+    </section>
+
+    <!-- Sticky Category Nav -->
+    <nav class="sticky top-0 z-30 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-yellow-500/20 py-3 mb-6">
+        <div class="max-w-2xl mx-auto px-4">
+            <div class="flex overflow-x-auto no-scrollbar gap-2 snap-x" id="category-nav">
+                <!-- Categories injected here -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Menu Container -->
+    <main class="max-w-2xl mx-auto px-4" id="menu-container">
+        <!-- Menu sections injected here -->
+    </main>
+
+    <!-- Footer -->
+    <div style="text-align: center; color: #ffd700; padding: 20px; font-weight: bold; margin-bottom: 80px; margin-top: 40px; border-top: 1px solid rgba(255,215,0,0.2);">
+        Design By Kiran Patil 7385736036
+    </div>
+
+    <!-- Floating Cart Bar -->
+    <div id="floating-cart" class="fixed bottom-0 left-0 right-0 z-40 transform translate-y-full transition-transform duration-300">
+        <div class="max-w-2xl mx-auto p-4 pb-6">
+            <button onclick="openCartModal()" class="w-full gold-bg rounded-xl p-4 flex items-center justify-between shadow-[0_5px_25px_rgba(255,215,0,0.25)] active:scale-95 transition-transform">
+                <div class="flex items-center gap-3">
+                    <div class="bg-black/20 p-2 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                    </div>
+                    <div class="text-left">
+                        <span class="font-bold text-sm tracking-wide block uppercase">View Cart (<span id="cart-item-count">0</span> items)</span>
+                    </div>
+                </div>
+                <div class="font-black text-xl tracking-tight">
+                    ₹<span id="cart-total-price">0</span>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cart-modal" class="fixed inset-0 z-50 hidden">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeCartModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="absolute bottom-0 left-0 right-0 bg-[#121212] rounded-t-3xl border-t border-yellow-500/30 max-h-[85vh] flex flex-col md:max-w-md md:mx-auto md:top-1/2 md:bottom-auto md:translate-y-[-50%] md:rounded-2xl md:border">
+            
+            <div class="p-5 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a] rounded-t-3xl md:rounded-t-2xl">
+                <div>
+                    <h2 class="text-2xl font-serif gold-text">Your Order</h2>
+                </div>
+                <button onclick="closeCartModal()" class="p-2 bg-gray-900 text-gray-400 hover:text-yellow-500 rounded-full border border-gray-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <div id="cart-items-container" class="flex-1 overflow-y-auto p-5 custom-scrollbar bg-[#141414] space-y-4">
+                <!-- Cart items list -->
+            </div>
+
+            <div class="p-5 bg-[#0a0a0a] border-t border-gray-800 md:rounded-b-2xl">
+                <div class="flex justify-between items-center mb-5">
+                    <span class="text-gray-400 font-medium">Grand Total</span>
+                    <span class="text-2xl font-black gold-text">₹<span id="modal-total-price">0</span></span>
+                </div>
+                
+                <button onclick="checkout()" class="w-full bg-[#25D366] hover:bg-[#20b957] text-black rounded-xl p-4 font-bold flex items-center justify-center gap-2 transition-transform active:scale-95 shadow-[0_4px_20px_rgba(37,211,102,0.2)]">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="fill-current"><path d="M17.498 14.382c-.301-.15-1.767-.867-2.04-.966-.273-.101-.473-.15-.673.15-.197.295-.771.964-.944 1.162-.175.195-.349.21-.646.064-.301-.15-1.265-.476-2.408-1.488-.89-.785-1.493-1.756-1.666-2.054-.175-.295-.018-.458.132-.606.134-.132.301-.35.451-.524.15-.175.2-.301.3-.497.098-.198.05-.371-.025-.521-.075-.148-.673-1.611-.922-2.206-.241-.579-.481-.501-.673-.51l-.572-.014c-.198 0-.521.074-.794.372s-1.045 1.016-1.045 2.479 1.074 2.876 1.22 3.074c.148.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.767-.722 2.016-1.422.249-.701.249-1.296.175-1.422-.074-.127-.273-.201-.574-.351zM12 21a9.005 9.005 0 0 1-4.607-1.252l-.33-.195-3.418.897.913-3.332-.214-.34A8.995 8.995 0 0 1 3 12c0-4.97 4.03-9 9-9s9 4.03 9 9-4.03 9-9 9z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.76.455 3.407 1.246 4.83L2 22l5.353-1.196A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" fill="none" stroke="none"/></svg>
+                    Send Order via WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification (Replaces alert) -->
+    <div id="toast" class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-[#1a1a1a] border border-red-500 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 w-max max-w-[90vw]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="text-red-500" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="text-sm font-medium">Please fill customer details!</span>
+    </div>
+
+    <script>
+        const WHATSAPP_NUMBER = "919850845999";
+
+        // Menu Data Extraction
+        const menuData = [
+            {
+                category: "Beverages",
+                items: [
+                    { name: "Mineral Water", price: 25 },
+                    { name: "Cold Drinks / Soda", price: 30 },
+                    { name: "Blue Logan", price: 120 },
+                    { name: "Mint Mojito", price: 130 },
+                    { name: "Fresh Lime Water / Soda", price: 50 },
+                    { name: "Lassi", price: 70 },
+                    { name: "Butter Milk", price: 50 }
+                ]
+            },
+            {
+                category: "Soup Veg",
+                items: [
+                    { name: "Veg Manchaow Soup", price: 140 },
+                    { name: "Veg Hot & Sour Soup", price: 140 },
+                    { name: "Lemon Coriender Soup", price: 150 },
+                    { name: "Veg Clear soup", price: 130 }
+                ]
+            },
+            {
+                category: "Soup Non Veg",
+                items: [
+                    { name: "Chicken Manchaow soup", price: 160 },
+                    { name: "Chicken Hot & Sour Soup", price: 160 },
+                    { name: "Chicken Clear Soup", price: 140 },
+                    { name: "Chicken Boiled Soup", price: 150 },
+                    { name: "Mutton Boiled Soup", price: 170 }
+                ]
+            },
+            {
+                category: "Snacks Veg",
+                items: [
+                    { name: "Plane Cheese", price: 80 },
+                    { name: "Kaju Fry", price: 200 },
+                    { name: "Finger Chips", price: 170 },
+                    { name: "Chana Roast / Garlic", price: 150 },
+                    { name: "Mix Veg / Onion Pakoda", price: 160 },
+                    { name: "Paneer / Cheese Pakoda", price: 220 },
+                    { name: "Matki Fry / Latpat", price: 170 },
+                    { name: "Green Peas Rost", price: 160 },
+                    { name: "Papad Bhurji", price: 130 }
+                ]
+            },
+            {
+                category: "Snacks Non Veg",
+                items: [
+                    { name: "Egg Bhurji", price: 150 },
+                    { name: "Omelette Plain / Masala", price: 110 },
+                    { name: "Boiled Egg", price: 60 },
+                    { name: "Half Fry", price: 90 },
+                    { name: "Tawa Fish (Lalpari)", price: 350 },
+                    { name: "Fish Roast (Lalpari)", price: 330 },
+                    { name: "Chicken Roast", price: 300 },
+                    { name: "Egg Pakoda", price: 150 }
+                ]
+            },
+            {
+                category: "Papad",
+                items: [
+                    { name: "Roasted Papad/ Fry Papad", price: 25 },
+                    { name: "Masala Papad", price: 35 },
+                    { name: "Nagli Roasted / Nagli Fry", price: 40 },
+                    { name: "Nagli Masala", price: 50 },
+                    { name: "Sindhi Papad", price: 80 }
+                ]
+            },
+            {
+                category: "Chinese Veg",
+                items: [
+                    { name: "Veg Manchurian", price: 230 },
+                    { name: "Veg 65", price: 240 },
+                    { name: "Veg Crispy In Sachezwan Sauce", price: 250 },
+                    { name: "Honey Potato", price: 230 },
+                    { name: "Veg Chilly", price: 280 },
+                    { name: "Paneer Chilly", price: 290 },
+                    { name: "Paneer 65", price: 220 },
+                    { name: "Chinese Bhel", price: 230 },
+                    { name: "Soyabean Chilly", price: 310 },
+                    { name: "Paneer Dragon", price: 220 },
+                    { name: "Veg Hakka Noodles", price: 230 },
+                    { name: "Brown Garlic Noodles", price: 250 },
+                    { name: "Veg Schezwan Noodles", price: 240 }
+                ]
+            },
+            {
+                category: "Chinese Non Veg",
+                items: [
+                    { name: "Chicken Chilly", price: 310 },
+                    { name: "Chicken 65", price: 320 },
+                    { name: "Chicken Lollypop", price: 340 },
+                    { name: "Chicken Kentucky", price: 320 },
+                    { name: "Chicken Dragon", price: 320 },
+                    { name: "Chicken Green Chilly", price: 320 },
+                    { name: "Chicken Honey Chilly", price: 340 },
+                    { name: "Chicken Lemon Chilly", price: 340 },
+                    { name: "Chicken China Town", price: 430 },
+                    { name: "Chicken Hakka Noodles", price: 270 },
+                    { name: "Chicken Schezwan Noodles", price: 290 }
+                ]
+            },
+            {
+                category: "Tandoor Veg",
+                items: [
+                    { name: "Paneer Tikka", price: 290 },
+                    { name: "Paneer Pahadi Kabab", price: 310 },
+                    { name: "Paneer Maratha Kabab", price: 310 },
+                    { name: "Paneer Banjara Kabab", price: 310 },
+                    { name: "Paneer Malai Kabab", price: 340 },
+                    { name: "Veg Seekh kabab", price: 290 },
+                    { name: "Mushroom Tikka", price: 300 },
+                    { name: "Tandoori Manchurian (White)", price: 290 },
+                    { name: "Maratha Manchurian (Red)", price: 280 }
+                ]
+            },
+            {
+                category: "Tandoor Non Veg",
+                items: [
+                    { name: "Chicken Tikka", price: 320 },
+                    { name: "Tandoori Chicken (Full)", price: 600 },
+                    { name: "Tandoori Chicken (Half)", price: 360 },
+                    { name: "Chicken Tandoori Lollypop", price: 350 },
+                    { name: "Chicken Tangdi Kabab (2pic)", price: 330 },
+                    { name: "Chicken Tangdi Kabab (1pic)", price: 180 },
+                    { name: "Chicken Nazrana Kabab", price: 340 },
+                    { name: "Chicken Hazari Kabab", price: 350 },
+                    { name: "Chicken Lemon Kabab", price: 380 },
+                    { name: "Chicken Reshmi Kabab", price: 370 },
+                    { name: "Chicken Maratha Kabab", price: 340 },
+                    { name: "Chicken Kalimiri Kabab", price: 350 },
+                    { name: "Chicken Banjara Kabab", price: 340 },
+                    { name: "Chicken Malai Kabab", price: 370 },
+                    { name: "Chicken Garlic Chilly Kabab", price: 350 },
+                    { name: "Chicken Pahadi Kabab", price: 340 },
+                    { name: "Fish Tikka (Lalpari)", price: 350 },
+                    { name: "Fish Tikka bonles", price: 450 }
+                ]
+            },
+            {
+                category: "Main Course Veg",
+                items: [
+                    { name: "Surbhi Special Veg", price: 350 },
+                    { name: "Kaju Masala / Curry", price: 260 },
+                    { name: "Kaju Paneer Masala", price: 270 },
+                    { name: "Mushroom Masala", price: 260 },
+                    { name: "Cheese Delight", price: 310 },
+                    { name: "Cheese Begam Bahar", price: 310 },
+                    { name: "Paneer Masala", price: 250 },
+                    { name: "Paneer Butter Masala", price: 290 },
+                    { name: "Paneer Tikka Masala", price: 320 },
+                    { name: "Shahi Paneer", price: 300 },
+                    { name: "Paneer Lazziz", price: 300 },
+                    { name: "Paneer Afgani", price: 300 },
+                    { name: "Paneer Kofta", price: 320 },
+                    { name: "Paneer Bhurji", price: 300 },
+                    { name: "Muttar Paneer", price: 250 },
+                    { name: "Veg Kofta Curry", price: 270 },
+                    { name: "Veg Patiyala", price: 340 },
+                    { name: "Veg Bhuna", price: 250 },
+                    { name: "Green Pease Masala", price: 230 },
+                    { name: "Mix Veg", price: 240 },
+                    { name: "Veg Kolhapuri", price: 250 },
+                    { name: "Palak Paneer", price: 270 },
+                    { name: "Chana Masala", price: 200 },
+                    { name: "Shev Bhaji", price: 150 },
+                    { name: "Shev Tomato", price: 170 },
+                    { name: "Dal Fry", price: 180 },
+                    { name: "Dal Tadaka", price: 190 },
+                    { name: "Dal Palak", price: 200 },
+                    { name: "Jeera Alu", price: 200 }
+                ]
+            },
+            {
+                category: "Main Course Non Veg",
+                items: [
+                    { name: "Chicken Masala/Curry", price: 320 },
+                    { name: "Chicken Malwani", price: 350 },
+                    { name: "Chicken Latpat", price: 330 },
+                    { name: "Chicken Handi (Full)", price: 950 },
+                    { name: "Chicken Handi (Half)", price: 600 },
+                    { name: "Butter Chicken Handi (Full)", price: 1050 },
+                    { name: "Butter Chicken Handi (Half)", price: 650 },
+                    { name: "Chicken Handi Rost (Full)", price: 1050 },
+                    { name: "Chicken Handi Rost (Half)", price: 650 },
+                    { name: "Butter Chicken", price: 360 },
+                    { name: "Chicken Hydrabadi", price: 340 },
+                    { name: "Chicken Angara", price: 350 },
+                    { name: "Chicken Nilgiri / Boneless", price: 350 },
+                    { name: "Chicken Moglai", price: 350 },
+                    { name: "Chicken Tikka Masala", price: 350 },
+                    { name: "Chicken Maratha Masala", price: 340 },
+                    { name: "Murgh Musallam (Full)", price: 1050 },
+                    { name: "Murgh Musallam (Half)", price: 700 },
+                    { name: "Mutton Masala/Curry", price: 360 },
+                    { name: "Mutton Latpat", price: 370 },
+                    { name: "Mutton Handi (Full)", price: 1200 },
+                    { name: "Mutton Handi (Half)", price: 750 },
+                    { name: "Mutton Kolhapuri", price: 370 },
+                    { name: "Fish Handi (Full)", price: 950 },
+                    { name: "Fish Handi (Half)", price: 600 },
+                    { name: "Fish Masala/Curry", price: 330 },
+                    { name: "Fish Thecha", price: 350 },
+                    { name: "Fish Latpat", price: 340 },
+                    { name: "Egg Curry", price: 210 }
+                ]
+            },
+            {
+                category: "Biryani & Rice Veg",
+                items: [
+                    { name: "Steam Rice (Full)", price: 140 },
+                    { name: "Steam Rice (Half)", price: 90 },
+                    { name: "Jeera Rice (Full)", price: 150 },
+                    { name: "Jeera Rice (Half)", price: 100 },
+                    { name: "Veg Pulao", price: 230 },
+                    { name: "Veg Biryani", price: 260 },
+                    { name: "Paneer Biryani", price: 320 },
+                    { name: "Dal Khichadi", price: 190 },
+                    { name: "Dal Tadaka Khichadi", price: 210 },
+                    { name: "Palak Khichdi", price: 210 },
+                    { name: "Masala Rice", price: 210 },
+                    { name: "Veg Fried Rice", price: 220 },
+                    { name: "Veg Schezwan Rice", price: 230 },
+                    { name: "Veg Tripal Schezwan Rice", price: 370 }
+                ]
+            },
+            {
+                category: "Non Veg Biryani & Rice",
+                items: [
+                    { name: "Chicken Biryani", price: 320 },
+                    { name: "Chicken Tikka Biryani", price: 350 },
+                    { name: "Chicken Hydrabadi Biryani", price: 340 },
+                    { name: "Mutton Biryani", price: 370 },
+                    { name: "Egg Biryani", price: 260 },
+                    { name: "Egg Fried Rice", price: 240 },
+                    { name: "Chicken Fried Rice", price: 260 },
+                    { name: "Chicken Schezwan Rice", price: 280 },
+                    { name: "Chicken Tripal Schezwan Rice", price: 430 }
+                ]
+            },
+            {
+                category: "Indian Bread",
+                items: [
+                    { name: "Roti", price: 20 },
+                    { name: "Butter Roti", price: 25 },
+                    { name: "Bajara Roti", price: 25 },
+                    { name: "Butter Bajara", price: 30 },
+                    { name: "Nan", price: 60 },
+                    { name: "Butter Nan", price: 70 },
+                    { name: "Kulcha", price: 50 },
+                    { name: "Butter Kulcha", price: 60 },
+                    { name: "Lachha Paratha", price: 70 },
+                    { name: "Cheese Nan", price: 90 },
+                    { name: "Cheese Garlic Nan", price: 95 }
+                ]
+            },
+            {
+                category: "Salad & Raita",
+                items: [
+                    { name: "Green Salad", price: 110 },
+                    { name: "Kachumber Salad", price: 110 },
+                    { name: "Dahi Kachumber", price: 120 },
+                    { name: "Mix Veg Raita", price: 100 }
+                ]
+            }
+        ];
+
+        // Assign IDs and Type
+        let globalItemId = 0;
+        menuData.forEach(cat => {
+            const isNonVegCategory = cat.category.toLowerCase().includes('non veg') || cat.category.toLowerCase().includes('non-veg');
+            cat.items.forEach(item => {
+                item.id = `item_${globalItemId++}`;
+                // Auto detect veg/non-veg based on category or name (Egg, Chicken, Mutton, Fish are non-veg)
+                const nameLower = item.name.toLowerCase();
+                const hasNonVegKeywords = ['chicken', 'mutton', 'fish', 'egg', 'omelette'].some(kw => nameLower.includes(kw));
+                item.type = (isNonVegCategory || hasNonVegKeywords) ? 'non-veg' : 'veg';
+            });
+        });
+
+        // App State
+        let cart = {}; // { itemId: quantity }
+        let allItemsMap = {}; // { itemId: itemObject }
+        menuData.forEach(c => c.items.forEach(i => allItemsMap[i.id] = i));
+
+        // SVG Icons
+        const vegIcon = `<div class="w-4 h-4 border border-green-500 p-[2px] flex items-center justify-center rounded-sm"><div class="w-2 h-2 rounded-full bg-green-500"></div></div>`;
+        const nonVegIcon = `<div class="w-4 h-4 border border-red-500 p-[2px] flex items-center justify-center rounded-sm"><div class="w-2 h-2 rounded-full bg-red-500"></div></div>`;
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            renderNav();
+            renderMenu();
+            
+            // Remove validation message on typing
+            ['cust-name', 'cust-mobile', 'cust-table'].forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    document.getElementById('validation-msg').classList.add('hidden');
+                });
+            });
+        });
+
+        function renderNav() {
+            const nav = document.getElementById('category-nav');
+            let html = '';
+            menuData.forEach((cat, index) => {
+                const id = cat.category.replace(/\s+/g, '-');
+                const isFirst = index === 0;
+                html += `
+                    <a href="#${id}" 
+                       onclick="setActiveNav(this)"
+                       class="nav-btn whitespace-nowrap flex-shrink-0 px-5 py-2 rounded-full text-sm font-medium transition-all snap-start border border-gray-700 text-gray-400 hover:border-yellow-500 hover:text-yellow-500 ${isFirst ? 'gold-bg border-yellow-500 active-nav' : ''}">
+                        ${cat.category}
+                    </a>
+                `;
+            });
+            nav.innerHTML = html;
+        }
+
+        function setActiveNav(element) {
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('gold-bg', 'border-yellow-500', 'active-nav');
+                btn.classList.add('border-gray-700', 'text-gray-400');
+                btn.style.color = ""; // reset inline style
+            });
+            element.classList.remove('border-gray-700', 'text-gray-400');
+            element.classList.add('gold-bg', 'border-yellow-500', 'active-nav');
+            // Remove text color class to let gold-bg take over black text
+            element.style.color = "#000"; 
+        }
+
+        function renderMenu() {
+            const container = document.getElementById('menu-container');
+            let html = '';
+            menuData.forEach(cat => {
+                const sectionId = cat.category.replace(/\s+/g, '-');
+                html += `
+                    <div id="${sectionId}" class="scroll-mt-32 mb-10 pt-4">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="h-px bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent flex-1"></div>
+                            <h2 class="text-2xl font-serif gold-text tracking-wide text-center whitespace-nowrap">${cat.category}</h2>
+                            <div class="h-px bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent flex-1"></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${cat.items.map(item => generateItemCard(item)).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function generateItemCard(item) {
+            const qty = cart[item.id] || 0;
+            const icon = item.type === 'veg' ? vegIcon : nonVegIcon;
+            
+            let btnHtml = '';
+            if (qty > 0) {
+                btnHtml = `
+                    <div class="qty-control shadow-inner">
+                        <button onclick="updateQty('${item.id}', -1)" class="qty-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        <span class="qty-val">${qty}</span>
+                        <button onclick="updateQty('${item.id}', 1)" class="qty-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                    </div>
+                `;
+            } else {
+                btnHtml = `<button onclick="updateQty('${item.id}', 1)" class="btn-add hover:bg-yellow-500 hover:text-black">ADD</button>`;
+            }
+
+            return `
+                <div class="bg-[#141414] border border-gray-800 hover:border-yellow-500/40 rounded-xl p-4 flex justify-between items-center gap-4 transition-colors duration-300">
+                    <div class="flex-1">
+                        <div class="flex items-start gap-2.5 mb-1">
+                            <div class="mt-1 flex-shrink-0">${icon}</div>
+                            <h3 class="font-medium text-gray-100 text-[16px] leading-tight">${item.name}</h3>
+                        </div>
+                        <p class="gold-text font-semibold text-lg ml-7 border-l-2 border-yellow-500/20 pl-2">₹${item.price}</p>
+                    </div>
+                    <div class="flex-shrink-0 min-w-[90px] flex justify-end" id="control-${item.id}">
+                        ${btnHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateQty(itemId, delta) {
+            const currentQty = cart[itemId] || 0;
+            const newQty = Math.max(0, currentQty + delta);
+            
+            if (newQty === 0) {
+                delete cart[itemId];
+            } else {
+                cart[itemId] = newQty;
+            }
+
+            // Re-render specific item button area
+            const controlDiv = document.getElementById(`control-${itemId}`);
+            if (controlDiv) {
+                const item = allItemsMap[itemId];
+                if (newQty > 0) {
+                    controlDiv.innerHTML = `
+                        <div class="qty-control shadow-inner">
+                            <button onclick="updateQty('${itemId}', -1)" class="qty-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                            <span class="qty-val">${newQty}</span>
+                            <button onclick="updateQty('${itemId}', 1)" class="qty-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        </div>
+                    `;
+                } else {
+                    controlDiv.innerHTML = `<button onclick="updateQty('${itemId}', 1)" class="btn-add hover:bg-yellow-500 hover:text-black">ADD</button>`;
+                }
+            }
+
+            updateCartUI();
+            
+            // If modal is open, re-render modal content
+            if (!document.getElementById('cart-modal').classList.contains('hidden')) {
+                renderModalCartItems();
+                if(Object.keys(cart).length === 0) closeCartModal();
+            }
+        }
+
+        function updateCartUI() {
+            let totalItems = 0;
+            let totalPrice = 0;
+
+            for (const [id, qty] of Object.entries(cart)) {
+                totalItems += qty;
+                totalPrice += allItemsMap[id].price * qty;
+            }
+
+            document.getElementById('cart-item-count').innerText = totalItems;
+            document.getElementById('cart-total-price').innerText = totalPrice;
+            document.getElementById('modal-total-price').innerText = totalPrice;
+
+            const floatCart = document.getElementById('floating-cart');
+            if (totalItems > 0) {
+                floatCart.classList.remove('translate-y-full');
+            } else {
+                floatCart.classList.add('translate-y-full');
+            }
+        }
+
+        function openCartModal() {
+            renderModalCartItems();
+            document.getElementById('cart-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
+        }
+
+        function closeCartModal() {
+            document.getElementById('cart-modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function renderModalCartItems() {
+            const container = document.getElementById('cart-items-container');
+            let html = '';
+            
+            for (const [id, qty] of Object.entries(cart)) {
+                const item = allItemsMap[id];
+                const icon = item.type === 'veg' ? vegIcon : nonVegIcon;
+                html += `
+                    <div class="flex justify-between items-center gap-3 bg-[#1a1a1a] p-3 rounded-xl border border-gray-800/50">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                ${icon}
+                                <h4 class="font-medium text-gray-200 text-sm leading-tight">${item.name}</h4>
+                            </div>
+                            <p class="text-xs gold-text ml-6">₹${item.price}</p>
+                        </div>
+                        
+                        <div class="flex items-center bg-[#0a0a0a] rounded-md overflow-hidden border border-gray-700">
+                            <button onclick="updateQty('${id}', -1)" class="p-1.5 text-gray-400 hover:text-yellow-500 hover:bg-gray-800"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                            <span class="w-6 text-center text-white text-sm font-bold">${qty}</span>
+                            <button onclick="updateQty('${id}', 1)" class="p-1.5 text-gray-400 hover:text-yellow-500 hover:bg-gray-800"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                        </div>
+                        <div class="w-14 text-right font-bold text-white text-sm">
+                            ₹${item.price * qty}
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "fixed top-24 left-1/2 transform -translate-x-1/2 bg-[#1a1a1a] border border-red-500 text-white px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 w-max max-w-[90vw] show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3500);
+        }
+
+        function checkout() {
+            const name = document.getElementById('cust-name').value.trim();
+            const mobile = document.getElementById('cust-mobile').value.trim();
+            const table = document.getElementById('cust-table').value.trim();
+
+            if (!name || !mobile || !table) {
+                closeCartModal();
+                
+                // Show inline validation and toast
+                const valMsg = document.getElementById('validation-msg');
+                valMsg.classList.remove('hidden');
+                
+                showToast();
+
+                // Scroll to top with offset
+                const formSection = document.getElementById('customer-form-section');
+                const yOffset = -20; 
+                const y = formSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+                window.scrollTo({top: y, behavior: 'smooth'});
+                
+                // Highlight fields
+                if(!name) document.getElementById('cust-name').classList.add('border-red-500');
+                if(!mobile) document.getElementById('cust-mobile').classList.add('border-red-500');
+                if(!table) document.getElementById('cust-table').classList.add('border-red-500');
+                
+                setTimeout(() => {
+                    document.getElementById('cust-name').classList.remove('border-red-500');
+                    document.getElementById('cust-mobile').classList.remove('border-red-500');
+                    document.getElementById('cust-table').classList.remove('border-red-500');
+                }, 3000);
+
+                return;
+            }
+
+            let totalPrice = 0;
+            let orderDetails = "";
+
+            for (const [id, qty] of Object.entries(cart)) {
+                const item = allItemsMap[id];
+                const itemTotal = item.price * qty;
+                totalPrice += itemTotal;
+                orderDetails += `${item.name} x ${qty} - Rs ${item.price}%0A`;
+            }
+
+            const message = `New Order!%0A%0ACustomer: ${name}%0AMobile: ${mobile}%0ATable No: ${table}%0A%0AOrder Details:%0A${orderDetails}%0ATotal Amount: Rs ${totalPrice}`;
+            
+            const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+        // Active Nav spy on scroll
+        window.addEventListener('scroll', () => {
+            let current = '';
+            const sections = document.querySelectorAll('main > div');
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 150) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            if (current) {
+                const navLinks = document.querySelectorAll('.nav-btn');
+                navLinks.forEach(a => {
+                    const href = a.getAttribute('href').substring(1);
+                    if (href === current) {
+                        setActiveNav(a);
+                        // Optional: smoothly scroll the nav bar itself so active item is visible
+                        a.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
